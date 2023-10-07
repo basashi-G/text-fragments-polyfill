@@ -1,3 +1,4 @@
+// src/fragment-generation-utils.js
 /**
  * Copyright 2020 Google LLC
  *
@@ -13,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as fragments from './text-fragment-utils.js';
 
 const MAX_EXACT_MATCH_LENGTH = 300;
 const MIN_LENGTH_WITHOUT_CONTEXT = 20;
@@ -33,14 +32,14 @@ let t0;  // Start timestamp for fragment generation
  * generation will halt and throw an error after this amount of time.
  * @param {Number} newTimeoutDurationMs - the desired timeout length, in ms.
  */
-export const setTimeout = (newTimeoutDurationMs) => {
+const setTimeout = (newTimeoutDurationMs) => {
   timeoutDurationMs = newTimeoutDurationMs;
 };
 
 /**
  * Enum indicating the success, or failure reason, of generateFragment.
  */
-export const GenerateFragmentStatus = {
+const GenerateFragmentStatus = {
   SUCCESS: 0,            // A fragment was generated.
   INVALID_SELECTION: 1,  // The selection provided could not be used.
   AMBIGUOUS: 2,  // No unique fragment could be identified for this selection.
@@ -63,7 +62,7 @@ export const GenerateFragmentStatus = {
  *     purposes. Defaults to current timestamp.
  * @return {GenerateFragmentResult}
  */
-export const generateFragment = (selection, startTime = Date.now()) => {
+const generateFragment = (selection, startTime = Date.now()) => {
   try {
     return doGenerateFragment(selection, startTime);
   } catch (err) {
@@ -84,7 +83,7 @@ export const generateFragment = (selection, startTime = Date.now()) => {
  * @param {Range} range
  * @return {boolean} - true if fragment generation may proceed; false otherwise.
  */
-export const isValidRangeForFragmentGeneration = (range) => {
+const isValidRangeForFragmentGeneration = (range) => {
   // Check that the range isn't just punctuation and whitespace. Only check the
   // first |TRUNCATE_RANGE_CHECK_CHARS| to put an upper bound on runtime; ranges
   // that start with (e.g.) thousands of periods should be rare.
@@ -92,7 +91,7 @@ export const isValidRangeForFragmentGeneration = (range) => {
   // field, as document.selection contains an empty range in these cases.
   if (!range.toString()
            .substring(0, TRUNCATE_RANGE_CHECK_CHARS)
-           .match(fragments.internal.NON_BOUNDARY_CHARS)) {
+           .match(NON_BOUNDARY_CHARS)) {
     return false;
   }
 
@@ -171,7 +170,7 @@ const doGenerateFragment = (selection, startTime) => {
   let factory;
 
   if (canUseExactMatch(range)) {
-    const exactText = fragments.internal.normalizeString(range.toString());
+    const exactText = normalizeString(range.toString());
     const fragment = {
       textStart: exactText,
     };
@@ -224,7 +223,7 @@ const doGenerateFragment = (selection, startTime) => {
     factory.setPrefixAndSuffixSearchSpace(prefixSearchSpace, suffixSearchSpace);
   }
 
-  factory.useSegmenter(fragments.internal.makeNewSegmenter());
+  factory.useSegmenter(makeNewSegmenter());
 
   let didEmbiggen = false;
   do {
@@ -315,7 +314,7 @@ const getSearchSpaceForStart = (range) => {
     if (textAccumulator.textInBlock !== null) {
       return textAccumulator.textInBlock;
     }
-    node = fragments.internal.forwardTraverse(walker, finishedSubtrees);
+    node = forwardTraverse(walker, finishedSubtrees);
   }
   return undefined;
 };
@@ -369,7 +368,7 @@ const getSearchSpaceForEnd = (range) => {
       return textAccumulator.textInBlock;
     }
 
-    node = fragments.internal.backwardTraverse(walker, finishedSubtrees);
+    node = backwardTraverse(walker, finishedSubtrees);
   }
   return undefined;
 };
@@ -486,7 +485,7 @@ const FragmentFactory = class {
             const newStartOffset =
                 this.getStartSearchSpace()
                     .substring(this.startOffset + 1)
-                    .search(fragments.internal.BOUNDARY_CHARS);
+                    .search(BOUNDARY_CHARS);
             if (newStartOffset === -1) {
               this.startOffset = this.getStartSearchSpace().length;
             } else {
@@ -495,7 +494,7 @@ const FragmentFactory = class {
             // Only count as an iteration if a word character was added.
             if (this.getStartSearchSpace()
                     .substring(oldStartOffset, this.startOffset)
-                    .search(fragments.internal.NON_BOUNDARY_CHARS) !== -1) {
+                    .search(NON_BOUNDARY_CHARS) !== -1) {
               oldStartOffset = this.startOffset;
               i++;
             }
@@ -526,7 +525,7 @@ const FragmentFactory = class {
             const newBackwardsOffset =
                 this.getBackwardsEndSearchSpace()
                     .substring(this.backwardsEndOffset() + 1)
-                    .search(fragments.internal.BOUNDARY_CHARS);
+                    .search(BOUNDARY_CHARS);
             if (newBackwardsOffset === -1) {
               this.setBackwardsEndOffset(this.getEndSearchSpace().length);
             } else {
@@ -536,7 +535,7 @@ const FragmentFactory = class {
             // Only count as an iteration if a word character was added.
             if (this.getBackwardsEndSearchSpace()
                     .substring(oldBackwardsEndOffset, this.backwardsEndOffset())
-                    .search(fragments.internal.NON_BOUNDARY_CHARS) !== -1) {
+                    .search(NON_BOUNDARY_CHARS) !== -1) {
               oldBackwardsEndOffset = this.backwardsEndOffset();
               i++;
             }
@@ -585,7 +584,7 @@ const FragmentFactory = class {
             const newBackwardsPrefixOffset =
                 this.getBackwardsPrefixSearchSpace()
                     .substring(this.backwardsPrefixOffset() + 1)
-                    .search(fragments.internal.BOUNDARY_CHARS);
+                    .search(BOUNDARY_CHARS);
             if (newBackwardsPrefixOffset === -1) {
               this.setBackwardsPrefixOffset(
                   this.getBackwardsPrefixSearchSpace().length);
@@ -597,7 +596,7 @@ const FragmentFactory = class {
             if (this.getBackwardsPrefixSearchSpace()
                     .substring(
                         oldBackwardsPrefixOffset, this.backwardsPrefixOffset())
-                    .search(fragments.internal.NON_BOUNDARY_CHARS) !== -1) {
+                    .search(NON_BOUNDARY_CHARS) !== -1) {
               oldBackwardsPrefixOffset = this.backwardsPrefixOffset();
               i++;
             }
@@ -622,7 +621,7 @@ const FragmentFactory = class {
             const newSuffixOffset =
                 this.getSuffixSearchSpace()
                     .substring(this.suffixOffset + 1)
-                    .search(fragments.internal.BOUNDARY_CHARS);
+                    .search(BOUNDARY_CHARS);
             if (newSuffixOffset === -1) {
               this.suffixOffset = this.getSuffixSearchSpace().length;
             } else {
@@ -631,7 +630,7 @@ const FragmentFactory = class {
             // Only count as an iteration if a word character was added.
             if (this.getSuffixSearchSpace()
                     .substring(oldSuffixOffset, this.suffixOffset)
-                    .search(fragments.internal.NON_BOUNDARY_CHARS) !== -1) {
+                    .search(NON_BOUNDARY_CHARS) !== -1) {
               oldSuffixOffset = this.suffixOffset;
               i++;
             }
@@ -1091,7 +1090,7 @@ const BlockTextAccumulator = class {
  *     portion of the document.
  */
 const isUniquelyIdentifying = (fragment) => {
-  return fragments.processTextFragmentDirective(fragment).length === 1;
+  return processTextFragmentDirective(fragment).length === 1;
 };
 
 /**
@@ -1161,13 +1160,13 @@ const getLastNodeForBlockSearch = (range) => {
 const getFirstTextNode = (range) => {
   // Check if first node in the range is a visible text node.
   const firstNode = getFirstNodeForBlockSearch(range);
-  if (isText(firstNode) && fragments.internal.isNodeVisible(firstNode)) {
+  if (isText(firstNode) && isNodeVisible(firstNode)) {
     return firstNode;
   }
 
   // First node is not visible text, use a tree walker to find the first visible
   // text node.
-  const walker = fragments.internal.makeTextNodeWalker(range);
+  const walker = makeTextNodeWalker(range);
   walker.currentNode = firstNode;
 
   return walker.nextNode();
@@ -1182,16 +1181,16 @@ const getFirstTextNode = (range) => {
 const getLastTextNode = (range) => {
   // Check if last node in the range is a visible text node.
   const lastNode = getLastNodeForBlockSearch(range);
-  if (isText(lastNode) && fragments.internal.isNodeVisible(lastNode)) {
+  if (isText(lastNode) && isNodeVisible(lastNode)) {
     return lastNode;
   }
 
   // Last node is not visible text, traverse the range backwards to find the
   // last visible text node.
-  const walker = fragments.internal.makeTextNodeWalker(range);
+  const walker = makeTextNodeWalker(range);
   walker.currentNode = lastNode;
 
-  return fragments.internal.backwardTraverse(walker, new Set());
+  return backwardTraverse(walker, new Set());
 };
 
 /**
@@ -1212,7 +1211,7 @@ const containsBlockBoundary = (range) => {
   while (!tempRange.collapsed && node != null) {
     if (isBlock(node)) return true;
     if (node != null) tempRange.setStartAfter(node);
-    node = fragments.internal.forwardTraverse(walker, finishedSubtrees);
+    node = forwardTraverse(walker, finishedSubtrees);
     checkTimeout();
   }
   return false;
@@ -1238,12 +1237,12 @@ const findWordStartBoundInTextNode = (node, startOffset) => {
   // If the first character in the range is a boundary character, we don't
   // need to do anything.
   if (offset < node.data.length &&
-      fragments.internal.BOUNDARY_CHARS.test(node.data[offset]))
+      BOUNDARY_CHARS.test(node.data[offset]))
     return offset;
 
   const precedingText = node.data.substring(0, offset);
   const boundaryIndex =
-      reverseString(precedingText).search(fragments.internal.BOUNDARY_CHARS);
+      reverseString(precedingText).search(BOUNDARY_CHARS);
 
   if (boundaryIndex !== -1) {
     // Because we did a backwards search, the found index counts backwards
@@ -1272,12 +1271,12 @@ const findWordEndBoundInTextNode = (node, endOffset) => {
   // If the last character in the range is a boundary character, we don't
   // need to do anything.
   if (offset < node.data.length && offset > 0 &&
-      fragments.internal.BOUNDARY_CHARS.test(node.data[offset - 1])) {
+      BOUNDARY_CHARS.test(node.data[offset - 1])) {
     return offset;
   }
 
   const followingText = node.data.substring(offset);
-  const boundaryIndex = followingText.search(fragments.internal.BOUNDARY_CHARS);
+  const boundaryIndex = followingText.search(BOUNDARY_CHARS);
 
   if (boundaryIndex !== -1) {
     return offset + boundaryIndex;
@@ -1313,7 +1312,7 @@ const makeWalkerForNode = (node, endNode) => {
 
   const walker = document.createTreeWalker(
       blockAncestor, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, (node) => {
-        return fragments.internal.acceptNodeIfVisibleInRange(node);
+        return acceptNodeIfVisibleInRange(node);
       });
 
   walker.currentNode = node;
@@ -1327,7 +1326,7 @@ const makeWalkerForNode = (node, endNode) => {
  * @param {Range} range - the range to be modified
  */
 const expandRangeStartToWordBound = (range) => {
-  const segmenter = fragments.internal.makeNewSegmenter();
+  const segmenter = makeNewSegmenter();
   if (segmenter) {
     // Find the starting text node and offset (since the range may start with a
     // non-text node).
@@ -1360,7 +1359,7 @@ const expandRangeStartToWordBound = (range) => {
     }
     const finishedSubtrees = new Set();
 
-    let node = fragments.internal.backwardTraverse(walker, finishedSubtrees);
+    let node = backwardTraverse(walker, finishedSubtrees);
     while (node != null) {
       const newOffset = findWordStartBoundInTextNode(node);
       if (newOffset !== -1) {
@@ -1383,7 +1382,7 @@ const expandRangeStartToWordBound = (range) => {
         return;
       }
 
-      node = fragments.internal.backwardTraverse(walker, finishedSubtrees);
+      node = backwardTraverse(walker, finishedSubtrees);
       // We should never get here; the walker should eventually hit a block node
       // or the root of the document. Collapse range so the caller can handle
       // this as an error.
@@ -1564,14 +1563,14 @@ const getTextNodesInSameBlock = (node) => {
   }
   const finishedSubtrees = new Set();
   let backNode =
-      fragments.internal.backwardTraverse(backWalker, finishedSubtrees);
+      backwardTraverse(backWalker, finishedSubtrees);
   while (backNode != null && !isBlock(backNode)) {
     checkTimeout();
     if (backNode.nodeType === Node.TEXT_NODE) {
       preNodes.push(backNode);
     }
     backNode =
-        fragments.internal.backwardTraverse(backWalker, finishedSubtrees);
+        backwardTraverse(backWalker, finishedSubtrees);
   };
   preNodes.reverse();
 
@@ -1581,7 +1580,7 @@ const getTextNodesInSameBlock = (node) => {
   } else {
     const walker = document.createTreeWalker(
         node, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, (node) => {
-          return fragments.internal.acceptNodeIfVisibleInRange(node);
+          return acceptNodeIfVisibleInRange(node);
         });
     walker.currentNode = node;
     let child = walker.nextNode();
@@ -1602,14 +1601,14 @@ const getTextNodesInSameBlock = (node) => {
   // Forward traverse from node after having finished its subtree
   // to get text nodes after it until we find a block boundary.
   const finishedSubtreesForward = new Set([node]);
-  let forwardNode = fragments.internal.forwardTraverse(
+  let forwardNode = forwardTraverse(
       forwardWalker, finishedSubtreesForward);
   while (forwardNode != null && !isBlock(forwardNode)) {
     checkTimeout();
     if (forwardNode.nodeType === Node.TEXT_NODE) {
       postNodes.push(forwardNode);
     }
-    forwardNode = fragments.internal.forwardTraverse(
+    forwardNode = forwardTraverse(
         forwardWalker, finishedSubtreesForward);
   }
 
@@ -1623,7 +1622,7 @@ const getTextNodesInSameBlock = (node) => {
  * @param {Range} range - the range to be modified
  */
 const expandRangeEndToWordBound = (range) => {
-  const segmenter = fragments.internal.makeNewSegmenter();
+  const segmenter = makeNewSegmenter();
   if (segmenter) {
     // Find the ending text node and offset (since the range may end with a
     // non-text node).
@@ -1679,7 +1678,7 @@ const expandRangeEndToWordBound = (range) => {
         return;
       }
 
-      node = fragments.internal.forwardTraverse(walker, finishedSubtrees);
+      node = forwardTraverse(walker, finishedSubtrees);
     }
     // We should never get here; the walker should eventually hit a block node
     // or the root of the document. Collapse range so the caller can handle this
@@ -1695,7 +1694,7 @@ const expandRangeEndToWordBound = (range) => {
  */
 const isBlock = (node) => {
   return node.nodeType === Node.ELEMENT_NODE &&
-      (fragments.internal.BLOCK_ELEMENTS.includes(node.tagName) ||
+      (BLOCK_ELEMENTS.includes(node.tagName) ||
        node.tagName === 'HTML' || node.tagName === 'BODY');
 };
 
@@ -1707,29 +1706,3 @@ const isBlock = (node) => {
 const isText = (node) => {
   return node.nodeType === Node.TEXT_NODE;
 };
-
-export const forTesting = {
-  containsBlockBoundary: containsBlockBoundary,
-  doGenerateFragment: doGenerateFragment,
-  expandRangeEndToWordBound: expandRangeEndToWordBound,
-  expandRangeStartToWordBound: expandRangeStartToWordBound,
-  findWordEndBoundInTextNode: findWordEndBoundInTextNode,
-  findWordStartBoundInTextNode: findWordStartBoundInTextNode,
-  FragmentFactory: FragmentFactory,
-  getSearchSpaceForEnd: getSearchSpaceForEnd,
-  getSearchSpaceForStart: getSearchSpaceForStart,
-  getTextNodesInSameBlock: getTextNodesInSameBlock,
-  recordStartTime: recordStartTime,
-  BlockTextAccumulator: BlockTextAccumulator,
-  getFirstTextNode: getFirstTextNode,
-  getLastTextNode: getLastTextNode,
-  moveRangeEdgesToTextNodes: moveRangeEdgesToTextNodes
-};
-
-// Allow importing module from closure-compiler projects that haven't migrated
-// to ES6 modules.
-if (typeof goog !== 'undefined') {
-  // clang-format off
-  goog.declareModuleId('googleChromeLabs.textFragmentPolyfill.fragmentGenerationUtils');
-  // clang-format on
-}

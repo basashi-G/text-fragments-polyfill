@@ -1,3 +1,4 @@
+// src/text-fragment-utils.js
 /**
  * Copyright 2020 Google LLC
  *
@@ -12,14 +13,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/**
- * @typedef {Object} TextFragment
- * @property {string} textStart
- * @property {string} [textEnd]
- * @property {string} [prefix]
- * @property {string} [suffix]
  */
 
 const FRAGMENT_DIRECTIVES = ['text'];
@@ -52,7 +45,7 @@ const NON_BOUNDARY_CHARS =
 /**
  * Text fragments CSS class name.
  */
-export const TEXT_FRAGMENT_CSS_CLASS_NAME =
+const TEXT_FRAGMENT_CSS_CLASS_NAME =
     'text-fragments-polyfill-target-text';
 
 /**
@@ -60,7 +53,7 @@ export const TEXT_FRAGMENT_CSS_CLASS_NAME =
  * @param {string} hash - string retrieved from Location#hash.
  * @return {{text: string[]}} Text Fragments contained in the hash.
  */
-export const getFragmentDirectives = (hash) => {
+const getFragmentDirectives = (hash) => {
   const fragmentDirectivesStrings =
       hash.replace(/#.*?:~:(.*?)/, '$1').split(/&?text=/).filter(Boolean);
   if (!fragmentDirectivesStrings.length) {
@@ -78,7 +71,7 @@ export const getFragmentDirectives = (hash) => {
  * @return {{text: TextFragment[]}} Text Fragments, each containing textStart,
  *     textEnd, prefix and suffix.
  */
-export const parseFragmentDirectives = (fragmentDirectives) => {
+const parseFragmentDirectives = (fragmentDirectives) => {
   const parsedFragmentDirectives = {};
   for (const
            [fragmentDirectiveType,
@@ -120,7 +113,7 @@ const parseTextFragmentDirective = (textFragment) => {
  * @return {{text: Element[]}} `<mark>` elements created to highlight the
  *     text fragments.
  */
-export const processFragmentDirectives =
+const processFragmentDirectives =
     (parsedFragmentDirectives, documentToProcess = document) => {
       const processedFragmentDirectives = {};
       for (const
@@ -157,7 +150,7 @@ export const processFragmentDirectives =
  *     document).
  */
 
-export const processTextFragmentDirective =
+const processTextFragmentDirective =
     (textFragment, documentToProcess = document) => {
       const results = [];
 
@@ -309,7 +302,7 @@ export const processTextFragmentDirective =
  *     originally pulled).
  * @param {Document} documentToProcess - document where to remove the marks.
  */
-export const removeMarks = (marks, documentToProcess = document) => {
+const removeMarks = (marks, documentToProcess = document) => {
   for (const mark of marks) {
     const range = documentToProcess.createRange();
     range.selectNodeContents(mark);
@@ -448,7 +441,7 @@ const makeTextNodeWalker =
  * @param {Document} documentToProcess - document where to highlight the range.
  * @return {Element[]} The <mark> nodes that were created.
  */
-export const markRange = (range, documentToProcess = document) => {
+const markRange = (range, documentToProcess = document) => {
   if (range.startContainer.nodeType != Node.TEXT_NODE ||
       range.endContainer.nodeType != Node.TEXT_NODE)
     return [];
@@ -516,7 +509,7 @@ export const markRange = (range, documentToProcess = document) => {
  * https://wicg.github.io/scroll-to-text-fragment/#navigating-to-text-fragment
  * @param {Element} element - Element to scroll into view.
  */
-export const scrollElementIntoView = (element) => {
+const scrollElementIntoView = (element) => {
   const behavior = {
     behavior: 'auto',
     block: 'center',
@@ -1025,98 +1018,4 @@ const backwardTraverse = (walker, finishedSubtrees) => {
   }
 
   return parent;
-};
-
-/**
- * Should not be referenced except in the /test directory.
- */
-export const forTesting = {
-  advanceRangeStartPastOffset: advanceRangeStartPastOffset,
-  advanceRangeStartToNonWhitespace: advanceRangeStartToNonWhitespace,
-  findRangeFromNodeList: findRangeFromNodeList,
-  findTextInRange: findTextInRange,
-  getBoundaryPointAtIndex: getBoundaryPointAtIndex,
-  isWordBounded: isWordBounded,
-  makeNewSegmenter: makeNewSegmenter,
-  markRange: markRange,
-  normalizeString: normalizeString,
-  parseTextFragmentDirective: parseTextFragmentDirective,
-  forwardTraverse: forwardTraverse,
-  backwardTraverse: backwardTraverse,
-  getAllTextNodes: getAllTextNodes,
-  acceptTextNodeIfVisibleInRange: acceptTextNodeIfVisibleInRange
-};
-
-/**
- * Should only be used by other files in this directory.
- */
-export const internal = {
-  BLOCK_ELEMENTS: BLOCK_ELEMENTS,
-  BOUNDARY_CHARS: BOUNDARY_CHARS,
-  NON_BOUNDARY_CHARS: NON_BOUNDARY_CHARS,
-  acceptNodeIfVisibleInRange: acceptNodeIfVisibleInRange,
-  normalizeString: normalizeString,
-  makeNewSegmenter: makeNewSegmenter,
-  forwardTraverse: forwardTraverse,
-  backwardTraverse: backwardTraverse,
-  makeTextNodeWalker: makeTextNodeWalker,
-  isNodeVisible: isNodeVisible
-}
-
-// Allow importing module from closure-compiler projects that haven't migrated
-// to ES6 modules.
-if (typeof goog !== 'undefined') {
-  // clang-format off
-  goog.declareModuleId('googleChromeLabs.textFragmentPolyfill.textFragmentUtils');
-  // clang-format on
-}
-
-/**
- * Replaces all occurence of the pseudo element ::target-text to a css class
- * text-fragments-polyfill-target-text
- *
- */
-export const applyTargetTextStyle = () => {
-  const styles = document.getElementsByTagName('style');
-  if (!styles) return;
-
-  for (const style of styles) {
-    const cssRules = style.innerHTML;
-    const targetTextRules =
-        cssRules.match(/(\w*)::target-text\s*{\s*((.|\n)*?)\s*}/g);
-    if (!targetTextRules) continue;
-
-    const markCss = targetTextRules.join('\n');
-    const newNode = document.createTextNode(markCss.replaceAll(
-        '::target-text', ` .${TEXT_FRAGMENT_CSS_CLASS_NAME}`));
-    style.appendChild(newNode);
-  }
-};
-
-/**
- * Add color and background-color to the CSS class.
- *
- * @param {Object} - background-color and color that will be applied to the
- *     to the CSS class.
- */
-export const setDefaultTextFragmentsStyle = ({backgroundColor, color}) => {
-  const styles = document.getElementsByTagName('style');
-  const defaultStyle = `.${TEXT_FRAGMENT_CSS_CLASS_NAME} {
-    background-color: ${backgroundColor};
-    color: ${color};
-  }
-  
-  .${TEXT_FRAGMENT_CSS_CLASS_NAME} a, a .${TEXT_FRAGMENT_CSS_CLASS_NAME} {
-    text-decoration: underline;
-  }
-  `
-  if (styles.length === 0) {
-    document.head.insertAdjacentHTML(
-        'beforeend', `<style type="text/css">${defaultStyle}</style>`);
-  }
-  else {
-    applyTargetTextStyle();
-    const defaultStyleNode = document.createTextNode(defaultStyle);
-    styles[0].insertBefore(defaultStyleNode, styles[0].firstChild);
-  }
 };
